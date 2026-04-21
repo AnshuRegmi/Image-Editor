@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f0f18 0%, #1a1a2e 100%);
+            padding: 20px 32px;
+            border-bottom: 1px solid #2d2d3f;
+        }
+
+        header h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .canvas-container {
+            flex: 1.5;
+            background: #14141f;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(45deg, #1a1a2e 25%, transparent 25%),
+                linear-gradient(-45deg, #1a1a2e 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #1a1a2e 75%),
+                linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        #imageCanvas {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 8px;
+            border: 1px solid #2d2d3f;
+            position: relative;
+            z-index: 1;
+            display: none;
+        }
+
+        #imageCanvas.visible {
+            display: block;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #94a3b8;
+            z-index: 1;
+            position: relative;
+        }
+
+        .placeholder svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .placeholder p {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .controls {
+            flex: 1;
+            background: #14141f;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+        }
+
+        .control-section {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #2d2d3f;
+        }
+
+        .control-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+
+        .upload-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 200ms ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99,102,241,0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #2d2d3f;
+        }
+
+        .btn-secondary:hover {
+            border-color: #6366f1;
+            color: #f1f5f9;
+        }
+
+        .btn-grayscale {
+            width: 100%;
+            background: transparent;
+            border: 2px solid transparent;
+            background-image: linear-gradient(#14141f, #14141f), linear-gradient(135deg, #6366f1, #22d3ee);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            color: #f1f5f9;
+        }
+
+        .btn-grayscale:hover {
+            box-shadow: 0 0 20px rgba(99,102,241,0.3);
+        }
+
+        .slider-group {
+            margin-bottom: 16px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .slider-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #f1f5f9;
+        }
+
+        .slider-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #22d3ee;
+            background: rgba(34,211,238,0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #3f3f5a;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+            transition: transform 150ms ease, box-shadow 150ms ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(99,102,241,0.6);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            background: #1a1a2e;
+            border: 1px solid #2d2d3f;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        select:hover, select:focus {
+            border-color: #6366f1;
+        }
+
+        select option {
+            background: #1a1a2e;
+            color: #f1f5f9;
+        }
+
+        .mask-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .blend-modes {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .blend-mode-btn {
+            padding: 8px;
+            background: #1a1a2e;
+            border: 1px solid #2d2d3f;
+            border-radius: 4px;
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+
+        .blend-mode-btn:hover {
+            border-color: #6366f1;
+            color: #f1f5f9;
+        }
+
+        .blend-mode-btn.active {
+            background: rgba(99,102,241,0.2);
+            border-color: #6366f1;
+            color: #22d3ee;
+        }
+
+        .mask-preview {
+            width: 100%;
+            height: 60px;
+            background: #1a1a2e;
+            border: 1px dashed #2d2d3f;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #94a3b8;
+            overflow: hidden;
+        }
+
+        .mask-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .actions .btn {
+            flex: 1;
+        }
+
+        .controls.disabled .slider-group,
+        .controls.disabled select,
+        .controls.disabled .btn-action {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        footer {
+            padding: 16px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+            border-top: 1px solid #2d2d3f;
+        }
+
+        @media (max-width: 900px) {
+            main {
+                flex-direction: column;
+            }
+
+            .controls {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Image Editor</h1>
+    </header>
+
+    <main>
+        <div class="canvas-container">
+            <div class="placeholder" id="placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="M21 15l-5-5L5 21"/>
+                </svg>
+                <p>Upload an image to get started</p>
+                <p style="font-size: 12px; opacity: 0.7;">Supports JPG, PNG, WebP</p>
+            </div>
+            <canvas id="imageCanvas" class=""></canvas>
+        </div>
+
+        <div class="controls disabled" id="controls">
+            <div class="control-section">
+                <div class="section-title">Upload Image</div>
+                <div class="upload-area">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="imageInput" accept="image/*">
+                        <button class="btn btn-primary" style="width: 100%;">Choose Image</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Convolution Filters</div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Box Blur</span>
+                        <span class="slider-value" id="blurValue">0</span>
+                    </div>
+                    <input type="range" id="blurSlider" min="0" max="10" value="0" step="1">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Sharpen</span>
+                        <span class="slider-value" id="sharpenValue">0</span>
+                    </div>
+                    <input type="range" id="sharpenSlider" min="0" max="10" value="0" step="1">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Edge Detection</span>
+                        <span class="slider-value" id="edgeValue">0</span>
+                    </div>
+                    <input type="range" id="edgeSlider" min="0" max="10" value="0" step="1">
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Pixel Adjustments</div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Brightness</span>
+                        <span class="slider-value" id="brightnessValue">0</span>
+                    </div>
+                    <input type="range" id="brightnessSlider" min="-100" max="100" value="0" step="1">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Contrast</span>
+                        <span class="slider-value" id="contrastValue">0</span>
+                    </div>
+                    <input type="range" id="contrastSlider" min="-100" max="100" value="0" step="1">
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Color Filters</div>
+
+                <button class="btn btn-grayscale btn-action" id="grayscaleBtn" style="margin-bottom: 12px;">Grayscale</button>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Color Filter</span>
+                    </div>
+                    <div class="select-wrapper">
+                        <select id="colorFilter" class="btn-action">
+                            <option value="none">None</option>
+                            <option value="sepia">Sepia</option>
+                            <option value="vintage">Vintage</option>
+                            <option value="cool">Cool</option>
+                            <option value="warm">Warm</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">Image Masking / Overlay</div>
+
+                <div class="mask-section">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="maskInput" accept="image/*">
+                        <button class="btn btn-secondary" style="width: 100%;">Choose Overlay Image</button>
+                    </div>
+                    <div class="mask-preview" id="maskPreview">No overlay image</div>
+                    <div class="slider-group" style="margin-bottom: 8px;">
+                        <div class="slider-header">
+                            <span class="slider-label">Blend Mode</span>
+                        </div>
+                        <div class="blend-modes">
+                            <button class="blend-mode-btn btn-action active" data-mode="multiply">Multiply</button>
+                            <button class="blend-mode-btn btn-action" data-mode="screen">Screen</button>
+                            <button class="blend-mode-btn btn-action" data-mode="overlay">Overlay</button>
+                        </div>
+                    </div>
+                    <div class="slider-group" style="margin-bottom: 0;">
+                        <div class="slider-header">
+                            <span class="slider-label">Opacity</span>
+                            <span class="slider-value" id="opacityValue">100%</span>
+                        </div>
+                        <input type="range" id="opacitySlider" min="0" max="100" value="100" step="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section" style="margin-bottom: 0;">
+                <div class="actions">
+                    <button class="btn btn-secondary btn-action" id="resetBtn">Reset All</button>
+                    <button class="btn btn-primary btn-action" id="downloadBtn">Download</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Built with Django + NumPy + OpenCV
+    </footer>
+
+    <script>
+        // State
+        let originalImageData = null;
+        let currentMaskImage = null;
+        let selectedBlendMode = 'multiply';
+        let debounceTimer = null;
+
+        // DOM Elements
+        const imageInput = document.getElementById('imageInput');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const ctx = imageCanvas.getContext('2d');
+        const placeholder = document.getElementById('placeholder');
+        const controls = document.getElementById('controls');
+        const maskInput = document.getElementById('maskInput');
+        const maskPreview = document.getElementById('maskPreview');
+
+        // Sliders
+        const blurSlider = document.getElementById('blurSlider');
+        const sharpenSlider = document.getElementById('sharpenSlider');
+        const edgeSlider = document.getElementById('edgeSlider');
+        const brightnessSlider = document.getElementById('brightnessSlider');
+        const contrastSlider = document.getElementById('contrastSlider');
+        const opacitySlider = document.getElementById('opacitySlider');
+
+        // Value displays
+        const blurValue = document.getElementById('blurValue');
+        const sharpenValue = document.getElementById('sharpenValue');
+        const edgeValue = document.getElementById('edgeValue');
+        const brightnessValue = document.getElementById('brightnessValue');
+        const contrastValue = document.getElementById('contrastValue');
+        const opacityValue = document.getElementById('opacityValue');
+
+        // Buttons
+        const grayscaleBtn = document.getElementById('grayscaleBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const colorFilter = document.getElementById('colorFilter');
+        const blendModeBtns = document.querySelectorAll('.blend-mode-btn');
+
+        // Load image
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Set canvas size
+                        imageCanvas.width = img.width;
+                        imageCanvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+
+                        // Store original
+                        originalImageData = ctx.getImageData(0, 0, img.width, img.height);
+
+                        // Show canvas
+                        imageCanvas.classList.add('visible');
+                        placeholder.style.display = 'none';
+                        controls.classList.remove('disabled');
+
+                        // Reset sliders
+                        resetSliders();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Mask/Overlay image
+        maskInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        currentMaskImage = img;
+                        maskPreview.innerHTML = '';
+                        const thumb = document.createElement('img');
+                        thumb.src = event.target.result;
+                        maskPreview.appendChild(thumb);
+                        applyFilters();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Blend mode selection
+        blendModeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                blendModeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedBlendMode = btn.dataset.mode;
+                applyFilters();
+            });
+        });
+
+        // Slider events
+        blurSlider.addEventListener('input', (e) => {
+            blurValue.textContent = e.target.value;
+            debounceApply();
+        });
+
+        sharpenSlider.addEventListener('input', (e) => {
+            sharpenValue.textContent = e.target.value;
+            debounceApply();
+        });
+
+        edgeSlider.addEventListener('input', (e) => {
+            edgeValue.textContent = e.target.value;
+            debounceApply();
+        });
+
+        brightnessSlider.addEventListener('input', (e) => {
+            brightnessValue.textContent = e.target.value;
+            debounceApply();
+        });
+
+        contrastSlider.addEventListener('input', (e) => {
+            contrastValue.textContent = e.target.value;
+            debounceApply();
+        });
+
+        opacitySlider.addEventListener('input', (e) => {
+            opacityValue.textContent = e.target.value + '%';
+            debounceApply();
+        });
+
+        colorFilter.addEventListener('change', applyFilters);
+
+        grayscaleBtn.addEventListener('click', () => {
+            if (!originalImageData) return;
+
+            const imgData = new ImageData(
+                new Uint8ClampedArray(originalImageData.data),
+                originalImageData.width,
+                originalImageData.height
+            );
+
+            for (let i = 0; i < imgData.data.length; i += 4) {
+                const gray = imgData.data[i] * 0.299 + imgData.data[i+1] * 0.587 + imgData.data[i+2] * 0.114;
+                imgData.data[i] = gray;
+                imgData.data[i+1] = gray;
+                imgData.data[i+2] = gray;
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (!originalImageData) return;
+
+            ctx.putImageData(new ImageData(
+                new Uint8ClampedArray(originalImageData.data),
+                originalImageData.width,
+                originalImageData.height
+            ), 0, 0);
+
+            resetSliders();
+            colorFilter.value = 'none';
+            currentMaskImage = null;
+            maskPreview.innerHTML = 'No overlay image';
+            selectedBlendMode = 'multiply';
+            blendModeBtns.forEach(b => b.classList.remove('active'));
+            blendModeBtns[0].classList.add('active');
+            opacitySlider.value = 100;
+            opacityValue.textContent = '100%';
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'edited_image.png';
+            link.href = imageCanvas.toDataURL('image/png');
+            link.click();
+        });
+
+        function debounceApply() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(applyFilters, 50);
+        }
+
+        function resetSliders() {
+            blurSlider.value = 0;
+            sharpenSlider.value = 0;
+            edgeSlider.value = 0;
+            brightnessSlider.value = 0;
+            contrastSlider.value = 0;
+
+            blurValue.textContent = '0';
+            sharpenValue.textContent = '0';
+            edgeValue.textContent = '0';
+            brightnessValue.textContent = '0';
+            contrastValue.textContent = '0';
+        }
+
+        function applyFilters() {
+            if (!originalImageData) return;
+
+            // Start with original
+            const imgData = new ImageData(
+                new Uint8ClampedArray(originalImageData.data),
+                originalImageData.width,
+                originalImageData.height
+            );
+
+            // Apply convolution filters
+            const blur = parseInt(blurSlider.value);
+            const sharpen = parseInt(sharpenSlider.value);
+            const edge = parseInt(edgeSlider.value);
+
+            if (blur > 0) {
+                applyBoxBlur(imgData, blur);
+            }
+            if (sharpen > 0) {
+                applySharpen(imgData, sharpen);
+            }
+            if (edge > 0) {
+                applyEdgeDetection(imgData, edge);
+            }
+
+            // Apply brightness
+            const brightness = parseInt(brightnessSlider.value);
+            if (brightness !== 0) {
+                applyBrightness(imgData, brightness);
+            }
+
+            // Apply contrast
+            const contrast = parseInt(contrastSlider.value);
+            if (contrast !== 0) {
+                applyContrast(imgData, contrast);
+            }
+
+            // Apply color filter
+            const filter = colorFilter.value;
+            if (filter !== 'none') {
+                applyColorFilter(imgData, filter);
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+
+            // Apply overlay if present
+            if (currentMaskImage) {
+                applyOverlay();
+            }
+        }
+
+        function applyBoxBlur(imgData, iterations) {
+            const data = imgData.data;
+            const width = imgData.width;
+            const height = imgData.height;
+
+            for (let iter = 0; iter < iterations; iter++) {
+                const source = new Uint8ClampedArray(data);
+                const kernel = [
+                    1, 1, 1,
+                    1, 1, 1,
+                    1, 1, 1
+                ];
+                const factor = 1/9;
+
+                convolve(data, source, width, height, kernel, factor);
+            }
+        }
+
+        function applySharpen(imgData, intensity) {
+            const data = imgData.data;
+            const width = imgData.width;
+            const height = imgData.height;
+            const kernel = [
+                0, -1, 0,
+                -1, 5, -1,
+                0, -1, 0
+            ];
+
+            const iterations = Math.ceil(intensity / 2);
+            const factor = 1;
+
+            for (let i = 0; i < iterations; i++) {
+                const source = new Uint8ClampedArray(data);
+                convolve(data, source, width, height, kernel, factor);
+            }
+        }
+
+        function applyEdgeDetection(imgData, intensity) {
+            const data = imgData.data;
+            const width = imgData.width;
+            const height = imgData.height;
+
+            // Laplacian kernel
+            const kernel = [
+                0, -1, 0,
+                -1, 4, -1,
+                0, -1, 0
+            ];
+
+            const iterations = Math.ceil(intensity / 2);
+            const factor = 1;
+
+            for (let i = 0; i < iterations; i++) {
+                const source = new Uint8ClampedArray(data);
+                convolve(data, source, width, height, kernel, factor);
+            }
+        }
+
+        function convolve(outData, source, width, height, kernel, factor) {
+            const half = Math.floor(Math.sqrt(kernel.length) / 2);
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0;
+
+                    for (let ky = -half; ky <= half; ky++) {
+                        for (let kx = -half; kx <= half; kx++) {
+                            const px = Math.min(width - 1, Math.max(0, x + kx));
+                            const py = Math.min(height - 1, Math.max(0, y + ky));
+                            const idx = (py * width + px) * 4;
+                            const kIdx = ((ky + half) * 3 + (kx + half));
+
+                            r += source[idx] * kernel[kIdx];
+                            g += source[idx + 1] * kernel[kIdx];
+                            b += source[idx + 2] * kernel[kIdx];
+                        }
+                    }
+
+                    const outIdx = (y * width + x) * 4;
+                    outData[outIdx] = Math.min(255, Math.max(0, r * factor));
+                    outData[outIdx + 1] = Math.min(255, Math.max(0, g * factor));
+                    outData[outIdx + 2] = Math.min(255, Math.max(0, b * factor));
+                }
+            }
+        }
+
+        function applyBrightness(imgData, value) {
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, Math.max(0, data[i] + value));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + value));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + value));
+            }
+        }
+
+        function applyContrast(imgData, value) {
+            const data = imgData.data;
+            const factor = (259 * (value + 255)) / (255 * (259 - value));
+
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
+                data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128));
+                data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128));
+            }
+        }
+
+        function applyColorFilter(imgData, filter) {
+            const data = imgData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i + 1];
+                let b = data[i + 2];
+
+                switch (filter) {
+                    case 'sepia':
+                        data[i] = Math.min(255, 0.393 * r + 0.769 * g + 0.189 * b);
+                        data[i + 1] = Math.min(255, 0.349 * r + 0.686 * g + 0.168 * b);
+                        data[i + 2] = Math.min(255, 0.272 * r + 0.534 * g + 0.131 * b);
+                        break;
+                    case 'vintage':
+                        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                        data[i] = Math.min(255, gray * 1.1 + 20);
+                        data[i + 1] = Math.min(255, gray * 1.0 + 10);
+                        data[i + 2] = Math.min(255, gray * 0.9);
+                        break;
+                    case 'cool':
+                        data[i] = Math.max(0, r * 0.9);
+                        data[i + 1] = Math.max(0, g * 0.95);
+                        data[i + 2] = Math.min(255, b * 1.1 + 10);
+                        break;
+                    case 'warm':
+                        data[i] = Math.min(255, r * 1.1 + 15);
+                        data[i + 1] = Math.min(255, g * 1.0 + 5);
+                        data[i + 2] = Math.max(0, b * 0.9 - 10);
+                        break;
+                }
+            }
+        }
+
+        function applyOverlay() {
+            if (!currentMaskImage) return;
+
+            const opacity = parseInt(opacitySlider.value) / 100;
+            const maskCanvas = document.createElement('canvas');
+            maskCanvas.width = imageCanvas.width;
+            maskCanvas.height = imageCanvas.height;
+            const maskCtx = maskCanvas.getContext('2d');
+
+            // Draw and resize mask to match main canvas
+            maskCtx.drawImage(currentMaskImage, 0, 0, maskCanvas.width, maskCanvas.height);
+            const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+            const mainData = ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
+
+            for (let i = 0; i < mainData.data.length; i += 4) {
+                const idx = i;
+                let resultR, resultG, resultB;
+
+                const mR = maskData.data[idx];
+                const mG = maskData.data[idx + 1];
+                const mB = maskData.data[idx + 2];
+
+                const baseR = mainData.data[idx];
+                const baseG = mainData.data[idx + 1];
+                const baseB = mainData.data[idx + 2];
+
+                switch (selectedBlendMode) {
+                    case 'multiply':
+                        resultR = (baseR * mR) / 255;
+                        resultG = (baseG * mG) / 255;
+                        resultB = (baseB * mB) / 255;
+                        break;
+                    case 'screen':
+                        resultR = 255 - ((255 - baseR) * (255 - mR)) / 255;
+                        resultG = 255 - ((255 - baseG) * (255 - mG)) / 255;
+                        resultB = 255 - ((255 - baseB) * (255 - mB)) / 255;
+                        break;
+                    case 'overlay':
+                        resultR = baseR < 128 ? (2 * baseR * mR) / 255 : 255 - (2 * (255 - baseR) * (255 - mR)) / 255;
+                        resultG = baseG < 128 ? (2 * baseG * mG) / 255 : 255 - (2 * (255 - baseG) * (255 - mG)) / 255;
+                        resultB = baseB < 128 ? (2 * baseB * mB) / 255 : 255 - (2 * (255 - baseB) * (255 - mB)) / 255;
+                        break;
+                }
+
+                // Blend with opacity
+                mainData.data[idx] = baseR * (1 - opacity) + resultR * opacity;
+                mainData.data[idx + 1] = baseG * (1 - opacity) + resultG * opacity;
+                mainData.data[idx + 2] = baseB * (1 - opacity) + resultB * opacity;
+            }
+
+            ctx.putImageData(mainData, 0, 0);
+        }
+    </script>
+</body>
+</html>

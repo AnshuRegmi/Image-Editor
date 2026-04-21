@@ -222,11 +222,28 @@
             border-radius: var(--radius-sm);
             min-height: 400px;
             border: 2px dashed var(--border);
-            transition: border-color var(--transition);
+            transition: all var(--transition);
+            cursor: pointer;
         }
 
         .canvas-wrapper:hover {
             border-color: var(--primary);
+        }
+
+        .canvas-wrapper.drag-over {
+            border-color: var(--accent);
+            background: rgba(34, 211, 238, 0.1);
+            transform: scale(1.01);
+        }
+
+        .canvas-wrapper.has-image {
+            border: none;
+            background: transparent;
+            cursor: default;
+        }
+
+        .canvas-wrapper.clickable {
+            cursor: pointer;
         }
 
         .canvas-wrapper.has-image {
@@ -743,14 +760,15 @@
                 <span class="canvas-badge" id="imageDimensions">No image</span>
             </div>
             <div class="canvas-wrapper" id="canvasWrapper">
+                <input type="file" id="dropZoneInput" accept="image/*" style="display: none;">
                 <div class="placeholder" id="placeholder">
                     <div class="placeholder-icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/>
                         </svg>
                     </div>
-                    <h3>Drop your image here</h3>
-                    <p>or click the upload button to get started</p>
+                    <h3>Drop image here</h3>
+                    <p>or click anywhere to upload</p>
                 </div>
                 <canvas id="imageCanvas"></canvas>
             </div>
@@ -985,6 +1003,7 @@
 
         // DOM Elements
         const imageInput = document.getElementById('imageInput');
+        const dropZoneInput = document.getElementById('dropZoneInput');
         const imageCanvas = document.getElementById('imageCanvas');
         const ctx = imageCanvas.getContext('2d');
         const placeholder = document.getElementById('placeholder');
@@ -993,6 +1012,74 @@
         const maskInput = document.getElementById('maskInput');
         const maskPreview = document.getElementById('maskPreview');
         const imageDimensions = document.getElementById('imageDimensions');
+
+        // Make canvas wrapper clickable to upload (when no image)
+        canvasWrapper.addEventListener('click', (e) => {
+            if (!originalImageData) {
+                dropZoneInput.click();
+            }
+        });
+
+        // Drag and drop on canvas wrapper
+        canvasWrapper.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!originalImageData) {
+                canvasWrapper.classList.add('drag-over');
+            }
+        });
+
+        canvasWrapper.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            canvasWrapper.classList.remove('drag-over');
+        });
+
+        canvasWrapper.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            canvasWrapper.classList.remove('drag-over');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                loadImage(files[0]);
+            }
+        });
+
+        // Drop zone input change handler
+        dropZoneInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                loadImage(file);
+            }
+        });
+
+        // Image loading function
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    imageCanvas.width = img.width;
+                    imageCanvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    originalImageData = ctx.getImageData(0, 0, img.width, img.height);
+
+                    imageCanvas.classList.add('visible');
+                    placeholder.style.display = 'none';
+                    canvasWrapper.classList.add('has-image');
+                    controls.classList.remove('disabled');
+
+                    // Enable all disabled interactive elements
+                    document.querySelectorAll('.disabled').forEach(el => el.classList.remove('disabled'));
+
+                    imageDimensions.textContent = `${img.width} x ${img.height}`;
+                    resetSliders();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
 
         // Sliders
         const blurSlider = document.getElementById('blurSlider');
@@ -1017,33 +1104,11 @@
         const colorFilter = document.getElementById('colorFilter');
         const blendBtns = document.querySelectorAll('.blend-btn');
 
-        // Load image
+        // Load image from upload button
         imageInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        imageCanvas.width = img.width;
-                        imageCanvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        originalImageData = ctx.getImageData(0, 0, img.width, img.height);
-
-                        imageCanvas.classList.add('visible');
-                        placeholder.style.display = 'none';
-                        canvasWrapper.classList.add('has-image');
-                        controls.classList.remove('disabled');
-
-                        // Enable all disabled interactive elements
-                        document.querySelectorAll('.disabled').forEach(el => el.classList.remove('disabled'));
-
-                        imageDimensions.textContent = `${img.width} x ${img.height}`;
-                        resetSliders();
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
+                loadImage(file);
             }
         });
 

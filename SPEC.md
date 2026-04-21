@@ -1,11 +1,10 @@
-# PixelForge - Image Editor Specification
+# Image Editor - Specification
 
 ## 1. Project Overview
 
-- **Project Name**: PixelForge
+- **Project Name**: Image Editor
 - **Type**: Django Web Application
 - **Core Functionality**: Real-time image processing with convolution-based filters and pixel manipulation
-- **Tagline**: "Forge Your Vision"
 
 ---
 

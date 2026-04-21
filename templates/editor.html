@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixelForge - Image Editor</title>
+    <title>Image Editor</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -722,7 +722,7 @@
                 </svg>
             </div>
             <div>
-                <div class="logo-text">PixelForge</div>
+                <div class="logo-text">Image Editor</div>
                 <div class="logo-tagline">Forge Your Vision</div>
             </div>
         </div>
@@ -953,14 +953,14 @@
         const body = document.body;
 
         // Load saved theme
-        const savedTheme = localStorage.getItem('pixelforge-theme') || 'dark';
+        const savedTheme = localStorage.getItem('image-editor-theme') || 'dark';
         body.dataset.theme = savedTheme;
         updateThemeIcon(savedTheme);
 
         themeToggle.addEventListener('click', () => {
             const newTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
             body.dataset.theme = newTheme;
-            localStorage.setItem('pixelforge-theme', newTheme);
+            localStorage.setItem('image-editor-theme', newTheme);
             updateThemeIcon(newTheme);
         });
 
@@ -1147,7 +1147,7 @@
 
         downloadBtn.addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = 'pixelforge_edited.png';
+            link.download = 'edited_image.png';
             link.href = imageCanvas.toDataURL('image/png');
             link.click();
         });

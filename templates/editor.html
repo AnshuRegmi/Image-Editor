@@ -7,35 +7,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d0d0d;
-            --surface: #1a1a1a;
-            --surface-elevated: #252525;
-            --surface-hover: #2a2a2a;
-            --primary: #6366f1;
-            --primary-glow: #818cf8;
-            --accent: #22d3ee;
-            --text-primary: #ffffff;
-            --text-secondary: #a1a1aa;
-            --border: #3f3f46;
-            --gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --bg: #191919;
+            --surface: #262626;
+            --surface-elevated: #303030;
+            --surface-hover: #404040;
+            --primary: #8B5CF6;
+            --primary-glow: #A78BFA;
+            --accent: #3B82F6;
+            --accent-alt: #22C55E;
+            --warning: #EAB308;
+            --pink: #EC4899;
+            --text-primary: #FAFAFA;
+            --text-secondary: #A3A3A3;
+            --text-muted: #737373;
+            --border: #404040;
+            --gradient: linear-gradient(135deg, #8B5CF6, #EC4899);
+            --gradient-accent: linear-gradient(135deg, #3B82F6, #22C55E);
             --shadow: 0 8px 32px rgba(0,0,0,0.4);
             --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
-            --radius: 16px;
+            --radius: 12px;
             --radius-sm: 8px;
             --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         [data-theme="light"] {
-            --bg: #f5f5f7;
-            --surface: #ffffff;
-            --surface-elevated: #f0f0f2;
-            --surface-hover: #e8e8ea;
-            --primary: #6366f1;
-            --primary-glow: #a5b4fc;
-            --accent: #0891b2;
-            --text-primary: #18181b;
-            --text-secondary: #71717a;
-            --border: #e4e4e7;
+            --bg: #FAFAFA;
+            --surface: #FFFFFF;
+            --surface-elevated: #F5F5F5;
+            --surface-hover: #E5E5E5;
+            --primary: #8B5CF6;
+            --primary-glow: #A78BFA;
+            --accent: #3B82F6;
+            --accent-alt: #22C55E;
+            --warning: #EAB308;
+            --pink: #EC4899;
+            --text-primary: #191919;
+            --text-secondary: #525252;
+            --text-muted: #737373;
+            --border: #D4D4D4;
             --shadow: 0 4px 24px rgba(0,0,0,0.08);
             --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
         }
@@ -95,7 +104,7 @@
         .logo-icon svg {
             width: 100%;
             height: 100%;
-            filter: drop-shadow(0 0 8px rgba(99,102,241,0.5));
+            filter: drop-shadow(0 0 8px rgba(139,92,246,0.5));
         }
 
         .logo-text {
@@ -202,7 +211,7 @@
             padding: 4px 10px;
             background: var(--surface-elevated);
             border-radius: 20px;
-            color: var(--accent);
+            color: var(--accent-alt);
             font-family: 'JetBrains Mono', monospace;
         }
 
@@ -232,7 +241,7 @@
 
         .canvas-wrapper.drag-over {
             border-color: var(--accent);
-            background: rgba(34, 211, 238, 0.1);
+            background: rgba(59, 130, 246, 0.1);
             transform: scale(1.01);
         }
 
@@ -357,7 +366,7 @@
 
         .control-section:hover {
             border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(99,102,241,0.1);
+            box-shadow: 0 0 20px rgba(139,92,246,0.15);
         }
 
         .section-header {
@@ -488,7 +497,7 @@
             font-size: 12px;
             font-weight: 600;
             color: var(--accent);
-            background: rgba(34,211,238,0.1);
+            background: rgba(59, 130, 246, 0.15);
             padding: 4px 10px;
             border-radius: 20px;
             min-width: 48px;
@@ -521,7 +530,7 @@
 
         input[type="range"]::-webkit-slider-thumb:hover {
             transform: scale(1.15);
-            box-shadow: 0 0 16px rgba(99,102,241,0.6);
+            box-shadow: 0 0 16px rgba(139,92,246,0.6);
         }
 
         input[type="range"]::-moz-range-thumb {
@@ -531,7 +540,7 @@
             background: var(--gradient);
             cursor: pointer;
             border: 3px solid var(--surface);
-            box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+            box-shadow: 0 2px 8px rgba(139,92,246,0.4);
         }
 
         /* Buttons */
@@ -653,10 +662,10 @@
         }
 
         .blend-btn.active {
-            background: rgba(99,102,241,0.15);
+            background: rgba(139,92,246,0.2);
             border-color: var(--primary);
             color: var(--primary-glow);
-            box-shadow: 0 0 12px rgba(99,102,241,0.2);
+            box-shadow: 0 0 12px rgba(139,92,246,0.3);
         }
 
         /* Mask Preview */
@@ -720,8 +729,8 @@
     <svg style="display: none;">
         <defs>
             <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#6366f1"/>
-                <stop offset="100%" style="stop-color:#22d3ee"/>
+                <stop offset="0%" style="stop-color:#8B5CF6"/>
+                <stop offset="100%" style="stop-color:#EC4899"/>
             </linearGradient>
         </defs>
     </svg>

@@ -3,9 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Editor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>PixelForge - Image Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #0d0d0d;
+            --surface: #1a1a1a;
+            --surface-elevated: #252525;
+            --surface-hover: #2a2a2a;
+            --primary: #6366f1;
+            --primary-glow: #818cf8;
+            --accent: #22d3ee;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --border: #3f3f46;
+            --gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
+            --radius: 16px;
+            --radius-sm: 8px;
+            --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="light"] {
+            --bg: #f5f5f7;
+            --surface: #ffffff;
+            --surface-elevated: #f0f0f2;
+            --surface-hover: #e8e8ea;
+            --primary: #6366f1;
+            --primary-glow: #a5b4fc;
+            --accent: #0891b2;
+            --text-primary: #18181b;
+            --text-secondary: #71717a;
+            --border: #e4e4e7;
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,77 +48,198 @@
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: #0a0a0f;
-            color: #f1f5f9;
+            background: var(--bg);
+            color: var(--text-primary);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            transition: background var(--transition), color var(--transition);
+            overflow-x: hidden;
         }
 
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
         header {
-            background: linear-gradient(135deg, #0f0f18 0%, #1a1a2e 100%);
-            padding: 20px 32px;
-            border-bottom: 1px solid #2d2d3f;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(20px);
         }
 
-        header h1 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 28px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+
+        .logo-icon svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 8px rgba(99,102,241,0.5));
+        }
+
+        .logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
             font-weight: 700;
-            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            background: var(--gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
+        .logo-tagline {
+            font-size: 11px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: -4px;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: var(--surface-elevated);
+            border-radius: 16px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary);
+        }
+
+        .theme-toggle-knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: var(--gradient);
+            border-radius: 50%;
+            transition: transform var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle-knob svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+        }
+
+        [data-theme="light"] .theme-toggle-knob {
+            transform: translateX(28px);
+        }
+
+        /* Main Layout */
         main {
-            flex: 1;
+            position: relative;
+            z-index: 1;
             display: flex;
             gap: 24px;
             padding: 24px;
             max-width: 1600px;
             margin: 0 auto;
-            width: 100%;
+            min-height: calc(100vh - 80px);
         }
 
-        .canvas-container {
+        /* Canvas Section */
+        .canvas-section {
             flex: 1.5;
-            background: #14141f;
-            border-radius: 12px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
             padding: 24px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 500px;
             position: relative;
             overflow: hidden;
         }
 
-        .canvas-container::before {
-            content: '';
-            position: absolute;
-            inset: 0;
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .canvas-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .canvas-badge {
+            font-size: 10px;
+            padding: 4px 10px;
+            background: var(--surface-elevated);
+            border-radius: 20px;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
             background:
-                linear-gradient(45deg, #1a1a2e 25%, transparent 25%),
-                linear-gradient(-45deg, #1a1a2e 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, #1a1a2e 75%),
-                linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);
+                linear-gradient(45deg, var(--surface-elevated) 25%, transparent 25%),
+                linear-gradient(-45deg, var(--surface-elevated) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, var(--surface-elevated) 75%),
+                linear-gradient(-45deg, transparent 75%, var(--surface-elevated) 75%);
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-            opacity: 0.3;
-            z-index: 0;
+            border-radius: var(--radius-sm);
+            min-height: 400px;
+            border: 2px dashed var(--border);
+            transition: border-color var(--transition);
+        }
+
+        .canvas-wrapper:hover {
+            border-color: var(--primary);
+        }
+
+        .canvas-wrapper.has-image {
+            border: none;
+            background: transparent;
         }
 
         #imageCanvas {
             max-width: 100%;
-            max-height: 70vh;
-            border-radius: 8px;
-            border: 1px solid #2d2d3f;
-            position: relative;
-            z-index: 1;
+            max-height: 60vh;
+            border-radius: var(--radius-sm);
             display: none;
+            box-shadow: var(--shadow);
         }
 
         #imageCanvas.visible {
@@ -93,266 +248,407 @@
 
         .placeholder {
             text-align: center;
-            color: #94a3b8;
-            z-index: 1;
-            position: relative;
+            padding: 48px;
         }
 
-        .placeholder svg {
+        .placeholder-icon {
             width: 80px;
             height: 80px;
-            margin-bottom: 16px;
-            opacity: 0.5;
+            margin: 0 auto 20px;
+            background: var(--gradient);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .placeholder-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        .placeholder h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
         }
 
         .placeholder p {
             font-size: 14px;
-            margin-bottom: 8px;
+            color: var(--text-secondary);
         }
 
+        /* Controls Panel */
         .controls {
             flex: 1;
-            background: #14141f;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: calc(100vh - 128px);
             overflow-y: auto;
-            max-height: calc(100vh - 120px);
+            transition: opacity var(--transition);
+        }
+
+        .controls::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .controls::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .controls::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .controls.disabled {
+            opacity: 0.5;
+            pointer-events: none;
         }
 
         .control-section {
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #2d2d3f;
+            background: var(--surface-elevated);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            border: 1px solid var(--border);
+            transition: all var(--transition);
         }
 
-        .control-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
+        .control-section:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99,102,241,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
         }
 
         .section-title {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #94a3b8;
-            margin-bottom: 16px;
-        }
-
-        .upload-area {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .file-input-wrapper input[type="file"] {
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border-radius: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 200ms ease;
             text-transform: uppercase;
             letter-spacing: 1px;
+            color: var(--text-primary);
+            flex: 1;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            color: #fff;
-            border: none;
-            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        .section-toggle {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-secondary);
+            transition: transform var(--transition);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99,102,241,0.4);
+        .control-section.collapsed .section-toggle {
+            transform: rotate(-90deg);
         }
 
-        .btn-secondary {
-            background: transparent;
-            color: #94a3b8;
-            border: 1px solid #2d2d3f;
+        .control-section.collapsed .section-content {
+            display: none;
         }
 
-        .btn-secondary:hover {
-            border-color: #6366f1;
-            color: #f1f5f9;
+        .section-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
-        .btn-grayscale {
+        /* Upload Area */
+        .upload-area {
+            position: relative;
+        }
+
+        .file-input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-btn {
             width: 100%;
-            background: transparent;
-            border: 2px solid transparent;
-            background-image: linear-gradient(#14141f, #14141f), linear-gradient(135deg, #6366f1, #22d3ee);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            color: #f1f5f9;
+            padding: 16px;
+            background: var(--gradient);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all var(--transition);
+            box-shadow: 0 4px 16px rgba(99,102,241,0.3);
         }
 
-        .btn-grayscale:hover {
-            box-shadow: 0 0 20px rgba(99,102,241,0.3);
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99,102,241,0.4);
         }
 
+        .upload-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Sliders */
         .slider-group {
-            margin-bottom: 16px;
+            position: relative;
         }
 
         .slider-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .slider-label {
             font-size: 13px;
             font-weight: 500;
-            color: #f1f5f9;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-label svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--primary);
         }
 
         .slider-value {
             font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
-            color: #22d3ee;
+            font-weight: 600;
+            color: var(--accent);
             background: rgba(34,211,238,0.1);
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            min-width: 48px;
+            text-align: center;
         }
 
         input[type="range"] {
             width: 100%;
-            height: 6px;
+            height: 8px;
             -webkit-appearance: none;
             appearance: none;
-            background: #3f3f5a;
-            border-radius: 3px;
+            background: var(--surface);
+            border-radius: 4px;
             outline: none;
+            cursor: pointer;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            background: var(--gradient);
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(99,102,241,0.4);
-            transition: transform 150ms ease, box-shadow 150ms ease;
+            transition: all 150ms ease;
+            border: 3px solid var(--surface);
         }
 
         input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(99,102,241,0.6);
+            transform: scale(1.15);
+            box-shadow: 0 0 16px rgba(99,102,241,0.6);
         }
 
         input[type="range"]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            background: var(--gradient);
             cursor: pointer;
-            border: none;
+            border: 3px solid var(--surface);
             box-shadow: 0 2px 8px rgba(99,102,241,0.4);
         }
 
+        /* Buttons */
+        .btn {
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .btn-grayscale {
+            width: 100%;
+            background: var(--surface);
+            border: 2px solid transparent;
+            background-image: linear-gradient(var(--surface), var(--surface)),
+                              var(--gradient);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            color: var(--text-primary);
+        }
+
+        .btn-grayscale:hover {
+            box-shadow: 0 0 20px rgba(99,102,241,0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            background: var(--surface-elevated);
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            border: none;
+            color: white;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+        }
+
+        /* Select */
         .select-wrapper {
             position: relative;
         }
 
         select {
             width: 100%;
-            padding: 10px 14px;
-            background: #1a1a2e;
-            border: 1px solid #2d2d3f;
-            border-radius: 6px;
-            color: #f1f5f9;
+            padding: 12px 40px 12px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
             font-family: 'Inter', sans-serif;
             font-size: 13px;
             cursor: pointer;
             outline: none;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a1a1aa' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 12px center;
+            transition: all var(--transition);
         }
 
         select:hover, select:focus {
-            border-color: #6366f1;
+            border-color: var(--primary);
         }
 
         select option {
-            background: #1a1a2e;
-            color: #f1f5f9;
+            background: var(--surface);
+            color: var(--text-primary);
         }
 
-        .mask-section {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
+        /* Blend Modes */
         .blend-modes {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
         }
 
-        .blend-mode-btn {
-            padding: 8px;
-            background: #1a1a2e;
-            border: 1px solid #2d2d3f;
-            border-radius: 4px;
-            color: #94a3b8;
+        .blend-btn {
+            padding: 10px 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
             font-family: 'JetBrains Mono', monospace;
             font-size: 10px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 150ms ease;
+            transition: all var(--transition);
+            text-transform: uppercase;
         }
 
-        .blend-mode-btn:hover {
-            border-color: #6366f1;
-            color: #f1f5f9;
+        .blend-btn:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
         }
 
-        .blend-mode-btn.active {
-            background: rgba(99,102,241,0.2);
-            border-color: #6366f1;
-            color: #22d3ee;
+        .blend-btn.active {
+            background: rgba(99,102,241,0.15);
+            border-color: var(--primary);
+            color: var(--primary-glow);
+            box-shadow: 0 0 12px rgba(99,102,241,0.2);
         }
 
+        /* Mask Preview */
         .mask-preview {
             width: 100%;
             height: 60px;
-            background: #1a1a2e;
-            border: 1px dashed #2d2d3f;
-            border-radius: 6px;
+            background: var(--surface);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
-            color: #94a3b8;
+            font-size: 12px;
+            color: var(--text-secondary);
             overflow: hidden;
+            transition: all var(--transition);
+        }
+
+        .mask-preview:hover {
+            border-color: var(--primary);
         }
 
         .mask-preview img {
@@ -361,30 +657,17 @@
             object-fit: contain;
         }
 
-        .actions {
+        /* Actions Row */
+        .actions-row {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .actions .btn {
+        .actions-row .btn {
             flex: 1;
         }
 
-        .controls.disabled .slider-group,
-        .controls.disabled select,
-        .controls.disabled .btn-action {
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        footer {
-            padding: 16px;
-            text-align: center;
-            color: #94a3b8;
-            font-size: 12px;
-            border-top: 1px solid #2d2d3f;
-        }
-
+        /* Responsive */
         @media (max-width: 900px) {
             main {
                 flex-direction: column;
@@ -393,98 +676,194 @@
             .controls {
                 max-height: none;
             }
+
+            header {
+                padding: 12px 16px;
+            }
+
+            .logo-tagline {
+                display: none;
+            }
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
+    <!-- SVG Definitions -->
+    <svg style="display: none;">
+        <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#6366f1"/>
+                <stop offset="100%" style="stop-color:#22d3ee"/>
+            </linearGradient>
+        </defs>
+    </svg>
+
     <header>
-        <h1>Image Editor</h1>
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="16" height="16" rx="3" fill="url(#logoGradient)"/>
+                    <rect x="22" y="2" width="16" height="16" rx="3" fill="url(#logoGradient)" opacity="0.7"/>
+                    <rect x="2" y="22" width="16" height="16" rx="3" fill="url(#logoGradient)" opacity="0.5"/>
+                    <rect x="22" y="22" width="16" height="16" rx="3" fill="url(#logoGradient)" opacity="0.3"/>
+                    <path d="M20 8L32 20L20 32L8 20L20 8Z" fill="white" fill-opacity="0.9"/>
+                    <path d="M20 14L26 20L20 26L14 20L20 14Z" fill="url(#logoGradient)"/>
+                </svg>
+            </div>
+            <div>
+                <div class="logo-text">PixelForge</div>
+                <div class="logo-tagline">Forge Your Vision</div>
+            </div>
+        </div>
+
+        <div class="theme-toggle" id="themeToggle">
+            <div class="theme-toggle-knob">
+                <svg viewBox="0 0 24 24" id="themeIcon">
+                    <path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+                </svg>
+            </div>
+        </div>
     </header>
 
     <main>
-        <div class="canvas-container">
-            <div class="placeholder" id="placeholder">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <path d="M21 15l-5-5L5 21"/>
-                </svg>
-                <p>Upload an image to get started</p>
-                <p style="font-size: 12px; opacity: 0.7;">Supports JPG, PNG, WebP</p>
+        <div class="canvas-section">
+            <div class="canvas-header">
+                <span class="canvas-title">Canvas</span>
+                <span class="canvas-badge" id="imageDimensions">No image</span>
             </div>
-            <canvas id="imageCanvas" class=""></canvas>
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <div class="placeholder" id="placeholder">
+                    <div class="placeholder-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/>
+                        </svg>
+                    </div>
+                    <h3>Drop your image here</h3>
+                    <p>or click the upload button to get started</p>
+                </div>
+                <canvas id="imageCanvas"></canvas>
+            </div>
         </div>
 
         <div class="controls disabled" id="controls">
+            <!-- Upload Section -->
             <div class="control-section">
-                <div class="section-title">Upload Image</div>
                 <div class="upload-area">
-                    <div class="file-input-wrapper">
-                        <input type="file" id="imageInput" accept="image/*">
-                        <button class="btn btn-primary" style="width: 100%;">Choose Image</button>
+                    <input type="file" class="file-input" id="imageInput" accept="image/*">
+                    <button class="upload-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                        </svg>
+                        Upload Image
+                    </button>
+                </div>
+            </div>
+
+            <!-- Convolution Filters -->
+            <div class="control-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-8-2h4v-4h-4v4zm-5.5-6l2.5 3.01L14.5 10l4 5H6l3.5-5z"/>
+                        </svg>
+                    </div>
+                    <span class="section-title">Convolution Filters</span>
+                    <svg class="section-toggle" viewBox="0 0 24 24">
+                        <path d="M7 10l5 5 5-5z"/>
+                    </svg>
+                </div>
+                <div class="section-content">
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                                Box Blur
+                            </span>
+                            <span class="slider-value" id="blurValue">0</span>
+                        </div>
+                        <input type="range" id="blurSlider" min="0" max="10" value="0">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <svg viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+                                Sharpen
+                            </span>
+                            <span class="slider-value" id="sharpenValue">0</span>
+                        </div>
+                        <input type="range" id="sharpenSlider" min="0" max="10" value="0">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                Edge Detection
+                            </span>
+                            <span class="slider-value" id="edgeValue">0</span>
+                        </div>
+                        <input type="range" id="edgeSlider" min="0" max="10" value="0">
                     </div>
                 </div>
             </div>
 
+            <!-- Pixel Adjustments -->
             <div class="control-section">
-                <div class="section-title">Convolution Filters</div>
-
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span class="slider-label">Box Blur</span>
-                        <span class="slider-value" id="blurValue">0</span>
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>
+                        </svg>
                     </div>
-                    <input type="range" id="blurSlider" min="0" max="10" value="0" step="1">
+                    <span class="section-title">Pixel Adjustments</span>
+                    <svg class="section-toggle" viewBox="0 0 24 24">
+                        <path d="M7 10l5 5 5-5z"/>
+                    </svg>
                 </div>
-
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span class="slider-label">Sharpen</span>
-                        <span class="slider-value" id="sharpenValue">0</span>
+                <div class="section-content">
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <svg viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c0 .34.03.67.08 1H2v-1zm0-2h2c.03-.33.08-.66.08-1H2v1zm9-9v1c0 .34-.03.67-.08 1H11v-2zm-2 2v1c0 .34-.03.67-.08 1H9v-2zm2 2v1c0 .34-.03.67-.08 1h-1v-2zm-4 0v1c0 .34-.03.67-.08 1H5v-2zm7-4c-.34 0-.67.03-1 .08V4h1zm4 0v1c-.33.05-.66.08-1 .08V4h1zm-5 3.5c0-.76.13-1.49.36-2.16.23.67.36 1.4.36 2.16h-2c0-.41-.03-.81-.08-1.2.32.39.5.85.5 1.35h-2c0-.28-.04-.55-.1-.8.29.25.52.55.72.89A4.993 4.993 0 0112 11c1.25 0 2.4.46 3.28 1.21.36.31.67.66.92 1.06-.34.17-.7.33-1.08.47A5.006 5.006 0 0112 18a5 5 0 01-5-5c0-1.13.38-2.17 1.01-3.01.33-.44.73-.83 1.18-1.16A5.012 5.012 0 0112 7.5zm0 3.5a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                                Brightness
+                            </span>
+                            <span class="slider-value" id="brightnessValue">0</span>
+                        </div>
+                        <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
                     </div>
-                    <input type="range" id="sharpenSlider" min="0" max="10" value="0" step="1">
-                </div>
 
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span class="slider-label">Edge Detection</span>
-                        <span class="slider-value" id="edgeValue">0</span>
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>
+                                Contrast
+                            </span>
+                            <span class="slider-value" id="contrastValue">0</span>
+                        </div>
+                        <input type="range" id="contrastSlider" min="-100" max="100" value="0">
                     </div>
-                    <input type="range" id="edgeSlider" min="0" max="10" value="0" step="1">
                 </div>
             </div>
 
+            <!-- Color Filters -->
             <div class="control-section">
-                <div class="section-title">Pixel Adjustments</div>
-
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span class="slider-label">Brightness</span>
-                        <span class="slider-value" id="brightnessValue">0</span>
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                        </svg>
                     </div>
-                    <input type="range" id="brightnessSlider" min="-100" max="100" value="0" step="1">
+                    <span class="section-title">Color Filters</span>
+                    <svg class="section-toggle" viewBox="0 0 24 24">
+                        <path d="M7 10l5 5 5-5z"/>
+                    </svg>
                 </div>
+                <div class="section-content">
+                    <button class="btn btn-grayscale" id="grayscaleBtn">Grayscale</button>
 
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span class="slider-label">Contrast</span>
-                        <span class="slider-value" id="contrastValue">0</span>
-                    </div>
-                    <input type="range" id="contrastSlider" min="-100" max="100" value="0" step="1">
-                </div>
-            </div>
-
-            <div class="control-section">
-                <div class="section-title">Color Filters</div>
-
-                <button class="btn btn-grayscale btn-action" id="grayscaleBtn" style="margin-bottom: 12px;">Grayscale</button>
-
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span class="slider-label">Color Filter</span>
-                    </div>
                     <div class="select-wrapper">
-                        <select id="colorFilter" class="btn-action">
+                        <select id="colorFilter">
                             <option value="none">None</option>
                             <option value="sepia">Sepia</option>
                             <option value="vintage">Vintage</option>
@@ -495,49 +874,98 @@
                 </div>
             </div>
 
+            <!-- Overlay Section -->
             <div class="control-section">
-                <div class="section-title">Image Masking / Overlay</div>
-
-                <div class="mask-section">
-                    <div class="file-input-wrapper">
-                        <input type="file" id="maskInput" accept="image/*">
-                        <button class="btn btn-secondary" style="width: 100%;">Choose Overlay Image</button>
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 19l-5-5V5h-4v4L9 5H5v14h14v-4h-2v4zm-8-6H9v4H7v-4H3v2h4v-4h4v4h4v-2z"/>
+                        </svg>
                     </div>
-                    <div class="mask-preview" id="maskPreview">No overlay image</div>
-                    <div class="slider-group" style="margin-bottom: 8px;">
+                    <span class="section-title">Overlay</span>
+                    <svg class="section-toggle" viewBox="0 0 24 24">
+                        <path d="M7 10l5 5 5-5z"/>
+                    </svg>
+                </div>
+                <div class="section-content">
+                    <div class="upload-area">
+                        <input type="file" class="file-input" id="maskInput" accept="image/*">
+                        <button class="btn btn-secondary" style="width: 100%;">
+                            <svg viewBox="0 0 24 24"><path d="M19 19l-5-5V5h-4v4L9 5H5v14h14v-4h-2v4z"/></svg>
+                            Choose Overlay
+                        </button>
+                    </div>
+
+                    <div class="mask-preview" id="maskPreview">No overlay</div>
+
+                    <div class="slider-group">
                         <div class="slider-header">
                             <span class="slider-label">Blend Mode</span>
                         </div>
                         <div class="blend-modes">
-                            <button class="blend-mode-btn btn-action active" data-mode="multiply">Multiply</button>
-                            <button class="blend-mode-btn btn-action" data-mode="screen">Screen</button>
-                            <button class="blend-mode-btn btn-action" data-mode="overlay">Overlay</button>
+                            <button class="blend-btn active" data-mode="multiply">Multiply</button>
+                            <button class="blend-btn" data-mode="screen">Screen</button>
+                            <button class="blend-btn" data-mode="overlay">Overlay</button>
                         </div>
                     </div>
-                    <div class="slider-group" style="margin-bottom: 0;">
+
+                    <div class="slider-group">
                         <div class="slider-header">
                             <span class="slider-label">Opacity</span>
                             <span class="slider-value" id="opacityValue">100%</span>
                         </div>
-                        <input type="range" id="opacitySlider" min="0" max="100" value="100" step="1">
+                        <input type="range" id="opacitySlider" min="0" max="100" value="100">
                     </div>
                 </div>
             </div>
 
-            <div class="control-section" style="margin-bottom: 0;">
-                <div class="actions">
-                    <button class="btn btn-secondary btn-action" id="resetBtn">Reset All</button>
-                    <button class="btn btn-primary btn-action" id="downloadBtn">Download</button>
+            <!-- Actions -->
+            <div class="control-section" style="background: transparent; border: none;">
+                <div class="actions-row">
+                    <button class="btn btn-secondary" id="resetBtn">
+                        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                        Reset
+                    </button>
+                    <button class="btn btn-primary" id="downloadBtn">
+                        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                        Download
+                    </button>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer>
-        Built with Django + NumPy + OpenCV
-    </footer>
-
     <script>
+        // Theme Management
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const body = document.body;
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('pixelforge-theme') || 'dark';
+        body.dataset.theme = savedTheme;
+        updateThemeIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const newTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
+            body.dataset.theme = newTheme;
+            localStorage.setItem('pixelforge-theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+
+        function updateThemeIcon(theme) {
+            if (theme === 'dark') {
+                themeIcon.innerHTML = '<path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>';
+            } else {
+                themeIcon.innerHTML = '<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>';
+            }
+        }
+
+        // Section Toggle
+        function toggleSection(header) {
+            header.parentElement.classList.toggle('collapsed');
+        }
+
         // State
         let originalImageData = null;
         let currentMaskImage = null;
@@ -549,9 +977,11 @@
         const imageCanvas = document.getElementById('imageCanvas');
         const ctx = imageCanvas.getContext('2d');
         const placeholder = document.getElementById('placeholder');
+        const canvasWrapper = document.getElementById('canvasWrapper');
         const controls = document.getElementById('controls');
         const maskInput = document.getElementById('maskInput');
         const maskPreview = document.getElementById('maskPreview');
+        const imageDimensions = document.getElementById('imageDimensions');
 
         // Sliders
         const blurSlider = document.getElementById('blurSlider');
@@ -574,7 +1004,7 @@
         const resetBtn = document.getElementById('resetBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const colorFilter = document.getElementById('colorFilter');
-        const blendModeBtns = document.querySelectorAll('.blend-mode-btn');
+        const blendBtns = document.querySelectorAll('.blend-btn');
 
         // Load image
         imageInput.addEventListener('change', (e) => {
@@ -584,20 +1014,17 @@
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = () => {
-                        // Set canvas size
                         imageCanvas.width = img.width;
                         imageCanvas.height = img.height;
                         ctx.drawImage(img, 0, 0);
-
-                        // Store original
                         originalImageData = ctx.getImageData(0, 0, img.width, img.height);
 
-                        // Show canvas
                         imageCanvas.classList.add('visible');
                         placeholder.style.display = 'none';
+                        canvasWrapper.classList.add('has-image');
                         controls.classList.remove('disabled');
 
-                        // Reset sliders
+                        imageDimensions.textContent = `${img.width} x ${img.height}`;
                         resetSliders();
                     };
                     img.src = event.target.result;
@@ -606,7 +1033,7 @@
             }
         });
 
-        // Mask/Overlay image
+        // Mask image
         maskInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -627,17 +1054,17 @@
             }
         });
 
-        // Blend mode selection
-        blendModeBtns.forEach(btn => {
+        // Blend mode
+        blendBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                blendModeBtns.forEach(b => b.classList.remove('active'));
+                blendBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 selectedBlendMode = btn.dataset.mode;
                 applyFilters();
             });
         });
 
-        // Slider events
+        // Sliders
         blurSlider.addEventListener('input', (e) => {
             blurValue.textContent = e.target.value;
             debounceApply();
@@ -672,46 +1099,41 @@
 
         grayscaleBtn.addEventListener('click', () => {
             if (!originalImageData) return;
-
             const imgData = new ImageData(
                 new Uint8ClampedArray(originalImageData.data),
                 originalImageData.width,
                 originalImageData.height
             );
-
             for (let i = 0; i < imgData.data.length; i += 4) {
                 const gray = imgData.data[i] * 0.299 + imgData.data[i+1] * 0.587 + imgData.data[i+2] * 0.114;
                 imgData.data[i] = gray;
                 imgData.data[i+1] = gray;
                 imgData.data[i+2] = gray;
             }
-
             ctx.putImageData(imgData, 0, 0);
         });
 
         resetBtn.addEventListener('click', () => {
             if (!originalImageData) return;
-
             ctx.putImageData(new ImageData(
                 new Uint8ClampedArray(originalImageData.data),
                 originalImageData.width,
                 originalImageData.height
             ), 0, 0);
-
             resetSliders();
             colorFilter.value = 'none';
             currentMaskImage = null;
-            maskPreview.innerHTML = 'No overlay image';
+            maskPreview.innerHTML = 'No overlay';
             selectedBlendMode = 'multiply';
-            blendModeBtns.forEach(b => b.classList.remove('active'));
-            blendModeBtns[0].classList.add('active');
+            blendBtns.forEach(b => b.classList.remove('active'));
+            blendBtns[0].classList.add('active');
             opacitySlider.value = 100;
             opacityValue.textContent = '100%';
         });
 
         downloadBtn.addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = 'edited_image.png';
+            link.download = 'pixelforge_edited.png';
             link.href = imageCanvas.toDataURL('image/png');
             link.click();
         });
@@ -727,7 +1149,6 @@
             edgeSlider.value = 0;
             brightnessSlider.value = 0;
             contrastSlider.value = 0;
-
             blurValue.textContent = '0';
             sharpenValue.textContent = '0';
             edgeValue.textContent = '0';
@@ -737,69 +1158,42 @@
 
         function applyFilters() {
             if (!originalImageData) return;
-
-            // Start with original
             const imgData = new ImageData(
                 new Uint8ClampedArray(originalImageData.data),
                 originalImageData.width,
                 originalImageData.height
             );
 
-            // Apply convolution filters
             const blur = parseInt(blurSlider.value);
             const sharpen = parseInt(sharpenSlider.value);
             const edge = parseInt(edgeSlider.value);
 
-            if (blur > 0) {
-                applyBoxBlur(imgData, blur);
-            }
-            if (sharpen > 0) {
-                applySharpen(imgData, sharpen);
-            }
-            if (edge > 0) {
-                applyEdgeDetection(imgData, edge);
-            }
+            if (blur > 0) applyBoxBlur(imgData, blur);
+            if (sharpen > 0) applySharpen(imgData, sharpen);
+            if (edge > 0) applyEdgeDetection(imgData, edge);
 
-            // Apply brightness
             const brightness = parseInt(brightnessSlider.value);
-            if (brightness !== 0) {
-                applyBrightness(imgData, brightness);
-            }
+            if (brightness !== 0) applyBrightness(imgData, brightness);
 
-            // Apply contrast
             const contrast = parseInt(contrastSlider.value);
-            if (contrast !== 0) {
-                applyContrast(imgData, contrast);
-            }
+            if (contrast !== 0) applyContrast(imgData, contrast);
 
-            // Apply color filter
             const filter = colorFilter.value;
-            if (filter !== 'none') {
-                applyColorFilter(imgData, filter);
-            }
+            if (filter !== 'none') applyColorFilter(imgData, filter);
 
             ctx.putImageData(imgData, 0, 0);
 
-            // Apply overlay if present
-            if (currentMaskImage) {
-                applyOverlay();
-            }
+            if (currentMaskImage) applyOverlay();
         }
 
         function applyBoxBlur(imgData, iterations) {
             const data = imgData.data;
             const width = imgData.width;
             const height = imgData.height;
-
+            const kernel = [1,1,1,1,1,1,1,1,1];
+            const factor = 1/9;
             for (let iter = 0; iter < iterations; iter++) {
                 const source = new Uint8ClampedArray(data);
-                const kernel = [
-                    1, 1, 1,
-                    1, 1, 1,
-                    1, 1, 1
-                ];
-                const factor = 1/9;
-
                 convolve(data, source, width, height, kernel, factor);
             }
         }
@@ -808,18 +1202,11 @@
             const data = imgData.data;
             const width = imgData.width;
             const height = imgData.height;
-            const kernel = [
-                0, -1, 0,
-                -1, 5, -1,
-                0, -1, 0
-            ];
-
+            const kernel = [0,-1,0,-1,5,-1,0,-1,0];
             const iterations = Math.ceil(intensity / 2);
-            const factor = 1;
-
             for (let i = 0; i < iterations; i++) {
                 const source = new Uint8ClampedArray(data);
-                convolve(data, source, width, height, kernel, factor);
+                convolve(data, source, width, height, kernel, 1);
             }
         }
 
@@ -827,43 +1214,30 @@
             const data = imgData.data;
             const width = imgData.width;
             const height = imgData.height;
-
-            // Laplacian kernel
-            const kernel = [
-                0, -1, 0,
-                -1, 4, -1,
-                0, -1, 0
-            ];
-
+            const kernel = [0,-1,0,-1,4,-1,0,-1,0];
             const iterations = Math.ceil(intensity / 2);
-            const factor = 1;
-
             for (let i = 0; i < iterations; i++) {
                 const source = new Uint8ClampedArray(data);
-                convolve(data, source, width, height, kernel, factor);
+                convolve(data, source, width, height, kernel, 1);
             }
         }
 
         function convolve(outData, source, width, height, kernel, factor) {
-            const half = Math.floor(Math.sqrt(kernel.length) / 2);
-
+            const half = 1;
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     let r = 0, g = 0, b = 0;
-
                     for (let ky = -half; ky <= half; ky++) {
                         for (let kx = -half; kx <= half; kx++) {
                             const px = Math.min(width - 1, Math.max(0, x + kx));
                             const py = Math.min(height - 1, Math.max(0, y + ky));
                             const idx = (py * width + px) * 4;
                             const kIdx = ((ky + half) * 3 + (kx + half));
-
                             r += source[idx] * kernel[kIdx];
                             g += source[idx + 1] * kernel[kIdx];
                             b += source[idx + 2] * kernel[kIdx];
                         }
                     }
-
                     const outIdx = (y * width + x) * 4;
                     outData[outIdx] = Math.min(255, Math.max(0, r * factor));
                     outData[outIdx + 1] = Math.min(255, Math.max(0, g * factor));
@@ -884,7 +1258,6 @@
         function applyContrast(imgData, value) {
             const data = imgData.data;
             const factor = (259 * (value + 255)) / (255 * (259 - value));
-
             for (let i = 0; i < data.length; i += 4) {
                 data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
                 data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128));
@@ -894,12 +1267,8 @@
 
         function applyColorFilter(imgData, filter) {
             const data = imgData.data;
-
             for (let i = 0; i < data.length; i += 4) {
-                let r = data[i];
-                let g = data[i + 1];
-                let b = data[i + 2];
-
+                let r = data[i], g = data[i + 1], b = data[i + 2];
                 switch (filter) {
                     case 'sepia':
                         data[i] = Math.min(255, 0.393 * r + 0.769 * g + 0.189 * b);
@@ -928,29 +1297,19 @@
 
         function applyOverlay() {
             if (!currentMaskImage) return;
-
             const opacity = parseInt(opacitySlider.value) / 100;
             const maskCanvas = document.createElement('canvas');
             maskCanvas.width = imageCanvas.width;
             maskCanvas.height = imageCanvas.height;
             const maskCtx = maskCanvas.getContext('2d');
-
-            // Draw and resize mask to match main canvas
             maskCtx.drawImage(currentMaskImage, 0, 0, maskCanvas.width, maskCanvas.height);
             const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
             const mainData = ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
 
             for (let i = 0; i < mainData.data.length; i += 4) {
-                const idx = i;
+                const mR = maskData.data[i], mG = maskData.data[i + 1], mB = maskData.data[i + 2];
+                const baseR = mainData.data[i], baseG = mainData.data[i + 1], baseB = mainData.data[i + 2];
                 let resultR, resultG, resultB;
-
-                const mR = maskData.data[idx];
-                const mG = maskData.data[idx + 1];
-                const mB = maskData.data[idx + 2];
-
-                const baseR = mainData.data[idx];
-                const baseG = mainData.data[idx + 1];
-                const baseB = mainData.data[idx + 2];
 
                 switch (selectedBlendMode) {
                     case 'multiply':
@@ -970,12 +1329,10 @@
                         break;
                 }
 
-                // Blend with opacity
-                mainData.data[idx] = baseR * (1 - opacity) + resultR * opacity;
-                mainData.data[idx + 1] = baseG * (1 - opacity) + resultG * opacity;
-                mainData.data[idx + 2] = baseB * (1 - opacity) + resultB * opacity;
+                mainData.data[i] = baseR * (1 - opacity) + resultR * opacity;
+                mainData.data[i + 1] = baseG * (1 - opacity) + resultG * opacity;
+                mainData.data[i + 2] = baseB * (1 - opacity) + resultB * opacity;
             }
-
             ctx.putImageData(mainData, 0, 0);
         }
     </script>

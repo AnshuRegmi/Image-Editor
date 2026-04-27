@@ -1189,6 +1189,7 @@
 
         function convolve(outData, source, width, height, kernel, factor) {
             const half = 1;
+            const kernelSize = 3;
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     let r = 0, g = 0, b = 0;
@@ -1197,7 +1198,7 @@
                             const px = Math.min(width - 1, Math.max(0, x + kx));
                             const py = Math.min(height - 1, Math.max(0, y + ky));
                             const idx = (py * width + px) * 4;
-                            const kIdx = ((ky + half) * 3 + (kx + half));
+                            const kIdx = (ky + half) * kernelSize + (kx + half);
                             r += source[idx] * kernel[kIdx];
                             g += source[idx + 1] * kernel[kIdx];
                             b += source[idx + 2] * kernel[kIdx];
